@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 
 require('electron-reload')(__dirname);
 
@@ -11,25 +11,34 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
+let processWindow;
 
 const createWindow = () => {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 800,
+    width: 400,
     height: 600,
+  });
+
+  processWindow = new BrowserWindow({
+    show: false,
   });
 
   // and load the index.html of the app.
   mainWindow.loadURL(`file://${__dirname}/index.html`);
+  processWindow.loadURL(`file://${__dirname}/processor.html`);
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
+  processWindow.webContents.openDevTools();
 
   // Emitted when the window is closed.
   mainWindow.on('closed', () => {
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
+    processWindow.destroy();
+    processWindow = null;
     mainWindow = null;
   });
 };
@@ -58,3 +67,6 @@ app.on('activate', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
+
+ipcMain.on('toProcessor', (e, data) => processWindow.webContents.send('main', data));
+ipcMain.on('toMain', (e, data) => mainWindow.webContents.send('main', data));

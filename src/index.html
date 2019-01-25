@@ -3,8 +3,70 @@
   <head>
     <meta charset="utf-8">
     <title></title>
+    <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
   </head>
+
   <body>
-    AA
+    <div class="container">
+      <div class="row">
+        <div class="col s12">
+          <h4 class="center-align">Declarações</h4>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="input-field col s6">
+          <select id="mes">
+            <option value="" disabled selected>Selecionar</option>
+            <option value="01">Jan</option>
+            <option value="02">Fev</option>
+            <option value="03">Mar</option>
+            <option value="04">Abr</option>
+            <option value="05">Mai</option>
+            <option value="06">Jun</option>
+            <option value="07">Jul</option>
+            <option value="08">Ago</option>
+            <option value="09">Set</option>
+            <option value="10">Out</option>
+            <option value="11">Nov</option>
+            <option value="12">Dez</option>
+          </select>
+          <label>Mês</label>
+        </div>
+
+        <div class="input-field col s6">
+          <select id="ano">
+            <option value="" disabled selected>Selecionar</option>
+            <option value="2019">2019</option>
+            <option value="2020">2020</option>
+          </select>
+          <label>Ano</label>
+        </div>
+      </div>
+
+      <div class="row">
+        <a class="waves-effect waves-light btn col s6 offset-s3" id="btn-atualizar" disabled>Atualizar</a>
+      </div>
+
+      <div class="row z-depth-1">
+        <div id="bar"></div>
+      </div>
+      <div class="row">
+        <h5>LOG</h5>
+      </div>
+      <div class="row">
+        <div id="status" style="height: 100px; overflow: auto;"></div>
+      </div>
+    </div>
+
+    <script>if (typeof module === 'object') { window.module = module; module = undefined; }</script>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="./scripts/ui.js"></script>
+
+    <script>if (window.module) module = window.module;</script>
   </body>
+
 </html>

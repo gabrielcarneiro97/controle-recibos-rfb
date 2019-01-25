@@ -52,6 +52,8 @@
     "electron-squirrel-startup": "^1.0.0",
     "google-auth-library": "^3.0.1",
     "googleapis": "27",
+    "jquery": "^3.3.1",
+    "progressbar.js": "^1.0.1",
     "xml-js": "^1.6.9"
   },
   "devDependencies": {

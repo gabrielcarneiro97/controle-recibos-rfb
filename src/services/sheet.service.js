@@ -1,6 +1,6 @@
 const google = require('googleapis');
 
-const { authorize } = require('./gApi.service');
+const { authorize } = require('./gAPI.service');
 
 const SHEET_INFOS = require('../../sheetInfos.json');
 const { sheetId } = require('../../config.json');
