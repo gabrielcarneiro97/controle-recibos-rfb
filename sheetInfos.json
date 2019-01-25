@@ -1,0 +1,19 @@
+{
+  "pageName": "TABELA",
+  "colNames": {
+    "cnpjCpf": "E",
+    "nomes": "D"
+  },
+  "dataRowLoc": {
+    "primDataRow": "4"
+  },
+  "esocial": {
+    "prim": "F"
+  },
+  "dctf": {
+    "prim": "G"
+  },
+  "efd": {
+    "prim": "H"
+  }
+}

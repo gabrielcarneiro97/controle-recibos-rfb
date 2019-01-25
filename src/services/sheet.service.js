@@ -2,8 +2,8 @@ const google = require('googleapis');
 
 const { authorize } = require('./gApi.service');
 
-const COLS_CONFIG = require('../../columns.json');
-const { sheetId: spreadsheetId } = require('../../config.json');
+const SHEET_INFOS = require('../../sheetInfos.json');
+const { sheetId } = require('../../config.json');
 
 const sheets = new google.GoogleApis().sheets('v4');
 
@@ -26,7 +26,7 @@ function lton(string) {
 }
 
 function calcCol(mes, dec) {
-  const { prim } = COLS_CONFIG[dec];
+  const { prim } = SHEET_INFOS[dec];
   const primNum = lton(prim);
 
   const c = 3 * (parseInt(mes, 10) - 1);
@@ -34,22 +34,7 @@ function calcCol(mes, dec) {
   return ntol(c + primNum);
 }
 
-function getSheetRange(range) {
-  return new Promise((resolve, reject) => {
-    authorize((auth) => {
-      sheets.spreadsheets.values.get({
-        auth,
-        range,
-        spreadsheetId,
-      }, (err, res) => {
-        if (err) reject(err);
-        else resolve(res);
-      });
-    });
-  });
-}
-
-function writeSheetRange(range, values) {
+function writeSheetRange(range, values, ano) {
   return new Promise((resolve, reject) => {
     authorize((auth) => {
       sheets.spreadsheets.values.update({
@@ -59,7 +44,7 @@ function writeSheetRange(range, values) {
         resource: {
           values,
         },
-        spreadsheetId,
+        spreadsheetId: sheetId[ano],
       }, (err, res) => {
         if (err) reject(err);
         else resolve(res);
@@ -68,20 +53,90 @@ function writeSheetRange(range, values) {
   });
 }
 
-function writeCell(cellId, data) {
-  return writeSheetRange(cellId, [[data]]);
+function writeCol(column, arr, ano) {
+  return new Promise((resolve, reject) => {
+    const values = arr.map(v => [v]);
+    const { dataRowLoc, pageName } = SHEET_INFOS;
+    const range = `${pageName}!${column}${dataRowLoc.primDataRow}:${column}`;
+    authorize((auth) => {
+      sheets.spreadsheets.values.update({
+        auth,
+        range,
+        valueInputOption: 'RAW',
+        resource: {
+          values,
+        },
+        spreadsheetId: sheetId[ano],
+      }, (err, res) => {
+        if (err) reject(err);
+        else resolve(res);
+      });
+    });
+  });
 }
 
-// getSheetRange('2019!A1').then((res) => {
-//   let rows = res.data.values;
+function writeColByDec(dec, data, { mes, ano }) {
+  const col = calcCol(mes, dec);
 
-//   console.log(rows);
-// }).catch(err => console.error(err));
+  return writeCol(col, data, ano);
+}
 
-writeCell('2019!A3', 'EITCHA!').then(r => console.log(r)).catch(err => console.error(err));
+function writeCell(cellId, data, ano) {
+  return writeSheetRange(cellId, [[data]], ano);
+}
+
+function getSheetRange(range, ano) {
+  return new Promise((resolve, reject) => {
+    authorize((auth) => {
+      sheets.spreadsheets.values.get({
+        auth,
+        range,
+        spreadsheetId: sheetId[ano],
+      }, (err, res) => {
+        if (err) reject(err);
+        else resolve(res);
+      });
+    });
+  });
+}
+
+function getCol(col, ano) {
+  return new Promise((resolve, reject) => {
+    const { dataRowLoc, pageName } = SHEET_INFOS;
+
+    const range = `${pageName}!${col}${dataRowLoc.primDataRow}:${col}`;
+
+    getSheetRange(range, ano).then((res) => {
+      const rows = res.data.values;
+
+      resolve(rows.map((v) => {
+        if (v[0]) return v[0];
+        return '';
+      }));
+    }).catch(err => reject(err));
+  });
+}
+
+function getColByName(name, ano) {
+  const { colNames } = SHEET_INFOS;
+  return getCol(colNames[name], ano);
+}
+
+function getColByDec(name, { mes, ano }) {
+  const col = calcCol(mes, name);
+
+  return getCol(col, ano);
+}
 
 module.exports = {
   lton,
   ntol,
   calcCol,
+  writeSheetRange,
+  writeCol,
+  writeColByDec,
+  writeCell,
+  getSheetRange,
+  getColByName,
+  getColByDec,
 };
