@@ -6,16 +6,18 @@ $(document).ready(() => {
   $('select').formSelect();
 
   const bar = new Line('#bar', {
-    color: '#009688',
+    color: '#26a69a',
     strokeWidth: 6,
     trailColor: '#b2dfdb',
     trailWidth: 6,
+    svgStyle: { width: '100%', height: '100%', borderRadius: '2px' },
     text: {
       value: '0%',
     },
   });
 
-  bar.text.style.color = 'rgba(0,0,0,0.87)';
+  bar.text.style.color = 'white';
+  bar.text.style.top = '36%';
 
   const btn = $('#btn-atualizar');
   const selectMes = $('#mes');
@@ -56,12 +58,15 @@ $(document).ready(() => {
 
   ipcRenderer.on('main', (e, { op, data }) => {
     if (op === 'progress') {
-      const { status: perc, msg } = data;
+      const { status: perc, msg, err } = data;
       bar.animate(perc, {
         duration: 100,
       }, () => {
         bar.text.innerText = `${(perc * 100).toFixed(0)}%`;
       });
+      if (err) {
+        err.forEach(d => console.error(d));
+      }
       status.append(msg);
     } else if (op === 'end') {
       btn.removeAttr('disabled');

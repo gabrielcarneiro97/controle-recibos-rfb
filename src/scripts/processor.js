@@ -23,9 +23,19 @@ ipcRenderer.on('main', (e, { op, data }) => {
       sendStatus(0.1, 'Leitura de arquivos concluída...<br>');
 
       sendStatus(0.15, 'Filtrando arquivos...<br>');
-      const eSocialFiles = files.filter(o => o.tipo === 's1299');
-      const dctfFiles = files.filter(o => o.tipo === 'dctf');
-      const ecdFiles = files.filter(o => o.tipo === 'ecd');
+      const eSocialFiles = [];
+      const dctfFiles = [];
+      const ecdFiles = [];
+
+      files.forEach((o) => {
+        if (o.tipo === 's1299') {
+          eSocialFiles.push(o);
+        } else if (o.tipo === 'dctf') {
+          dctfFiles.push(o);
+        } else if (o.tipo === 'r2099') {
+          ecdFiles.push(o);
+        }
+      });
       sendStatus(0.17, `Filtragem concluída...<br>
       Arquivos eSocial: ${eSocialFiles.length}<br>
       Arquivos DCTF: ${dctfFiles.length}<br>
@@ -42,7 +52,7 @@ ipcRenderer.on('main', (e, { op, data }) => {
       getPromises.push(getColByName('nomes', comp.ano));
       getPromises.push(getColByName('cnpjCpf', comp.ano));
 
-      Promise.all(getPromises).then(([nomes, cnpjCpfs]) => {
+      Promise.all(getPromises).then(([, cnpjCpfs]) => {
         sendStatus(0.25, 'Importação concluída...<br>');
         const idsFiltrados = cnpjCpfs.map((v) => {
           if (v) return v.replace(/\./g, '').replace(/-/g, '');
@@ -57,19 +67,48 @@ ipcRenderer.on('main', (e, { op, data }) => {
 
         sendStatus(0.26, 'Cruzando informações...<br>');
         idsFiltrados.forEach((id, i) => {
+          let msg = '';
           if (eSocial) {
             const now = eSocialFiles.find(o => o.cnpj === id.split('/')[0] || o.cpf === id);
-            if (now) eSocialArr[i] = now.fechamento.compSemMovto ? 'SM' : 'OK';
-            else eSocialArr[i] = '';
+            if (now) {
+              if (now.comp.ano === comp.ano && now.comp.mes === comp.mes) {
+                eSocialArr[i] = now.fechamento.compSemMovto ? 'SM' : 'OK';
+                msg = `<span style="color: green"> ${now.fileName} OK!</span><br>`;
+              } else {
+                eSocialArr[i] = now.fechamento.compSemMovto ? `SM CompErr ${now.fileName}` : `OK CompErr ${now.fileName}`;
+
+                msg = `<span style="color: red"> ${now.fileName} competência errada!</span><br>`;
+              }
+            } else eSocialArr[i] = '';
           }
           if (dctf) {
+            const now = dctfFiles.find(o => o.cnpj === id.replace('/', ''));
+            if (now) {
+              if (now.comp.ano === comp.ano && now.comp.mes === comp.mes) {
+                dctfArr[i] = 'OK';
+                msg = `<span style="color: green"> ${now.fileName} OK!</span><br>`;
+              } else {
+                dctfArr[i] = `OK CompErr ${now.fileName}`;
 
+                msg = `<span style="color: red"> ${now.fileName} competência errada!</span><br>`;
+              }
+            } else dctfArr[i] = '';
           }
           if (ecd) {
+            const now = ecdFiles.find(o => o.cnpj === id.split('/')[0] || o.cpf === id);
+            if (now) {
+              if (now.comp.ano === comp.ano && now.comp.mes === comp.mes) {
+                ecdArr[i] = 'OK';
+                msg = `<span style="color: green"> ${now.fileName} OK!</span><br>`;
+              } else {
+                ecdArr[i] = `OK CompErr ${now.fileName}`;
 
+                msg = `<span style="color: red"> ${now.fileName} competência errada!</span><br>`;
+              }
+            } else ecdArr[i] = '';
           }
 
-          sendStatus(0.26 + (passo * i));
+          sendStatus(0.26 + (passo * i), msg);
         });
 
         sendStatus(0.77, 'Cruzamento finalizado com sucesso...<br>Iniciando escrita...<br>');
@@ -83,8 +122,18 @@ ipcRenderer.on('main', (e, { op, data }) => {
         Promise.all(writePromises).then(() => {
           sendStatus(1, 'Processo finalizado com sucesso!<br>');
           ipcRenderer.send('toMain', { op: 'end' });
-        }).catch(errs => sendStatus(0, 'Erro!', errs));
-      }).catch(errs => sendStatus(0, 'Erro!', errs));
-    }).catch(err => sendStatus(0, 'Erro!', err));
+        }).catch((errs) => {
+          let msgs;
+          if (Array.isArray(errs)) msgs = errs.map(o => o.message);
+          else msgs = [errs.message];
+          sendStatus(0, '<span style="color: red">Erro!</span><br>', msgs);
+        });
+      }).catch((errs) => {
+        let msgs;
+        if (Array.isArray(errs)) msgs = errs.map(o => o.message);
+        else msgs = [errs.message];
+        sendStatus(0, '<span style="color: red">Erro!</span><br>', msgs);
+      });
+    }).catch(err => sendStatus(0, '<span style="color: red">Erro!</span><br>', [err.message]));
   }
 });
