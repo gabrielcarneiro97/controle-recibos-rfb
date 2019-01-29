@@ -2,8 +2,12 @@
 const { ipcRenderer } = require('electron');
 const { Line } = require('progressbar.js');
 
+const { version } = require('../package.json');
+
 $(document).ready(() => {
   $('select').formSelect();
+
+  $('#title').text(`XML Controller ${version}`);
 
   const bar = new Line('#bar', {
     color: '#26a69a',
@@ -65,7 +69,7 @@ $(document).ready(() => {
         bar.text.innerText = `${(perc * 100).toFixed(0)}%`;
       });
       if (err) {
-        err.forEach(d => console.error(d));
+        err.forEach(m => console.error(m));
       }
       status.append(msg);
     } else if (op === 'end') {

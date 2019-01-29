@@ -46,7 +46,6 @@ function s1299Reader(obj, fileName) {
 function r2099Reader(obj, fileName) {
   return new Promise((resolve) => {
     const { evtFechaEvPer: data } = obj.Reinf;
-    console.log(data);
     const { ideEvento, ideContri, infoFech } = data;
 
     const arrComp = ideEvento.perApur._text.split('-');

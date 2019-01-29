@@ -10,13 +10,13 @@ const sheets = new google.GoogleApis().sheets('v4');
 function ntol(num) {
   let ret = '';
   for (let a = 1, b = 26; (num -= a) >= 0; a = b, b *= 26) { // eslint-disable-line
-    ret = String.fromCharCode(parseInt((num % b) / a) + 65) + ret; // eslint-disable-line
+    ret = String.fromCharCode(parseInt((num % b) / a, 10) + 65) + ret;
   }
   return ret;
 }
 
-function lton(string) {
-  string = string.toUpperCase(); // eslint-disable-line
+function lton(str) {
+  const string = str.toUpperCase();
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let sum = 0;
   for (let i = 0; i < string.length; i += 1) {
@@ -108,11 +108,12 @@ function getCol(col, ano) {
 
     getSheetRange(range, ano).then((res) => {
       const rows = res.data.values;
-
-      resolve(rows.map((v) => {
-        if (v[0]) return v[0];
-        return '';
-      }));
+      if (rows) {
+        resolve(rows.map((v) => {
+          if (v[0]) return v[0];
+          return '';
+        }));
+      } else resolve([]);
     }).catch(err => reject(err));
   });
 }

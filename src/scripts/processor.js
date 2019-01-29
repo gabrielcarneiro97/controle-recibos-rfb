@@ -1,7 +1,7 @@
 const { ipcRenderer } = require('electron');
 const { readComp } = require('./services/xml.service');
 
-const { getColByName, writeColByDec } = require('./services/sheet.service');
+const { getColByName, writeColByDec, getColByDec } = require('./services/sheet.service');
 
 function sendStatus(status, msg, err) {
   ipcRenderer.send('toMain',
@@ -51,8 +51,13 @@ ipcRenderer.on('main', (e, { op, data }) => {
 
       getPromises.push(getColByName('nomes', comp.ano));
       getPromises.push(getColByName('cnpjCpf', comp.ano));
+      getPromises.push(getColByDec('esocial', comp));
+      getPromises.push(getColByDec('dctf', comp));
+      getPromises.push(getColByDec('ecd', comp));
 
-      Promise.all(getPromises).then(([, cnpjCpfs]) => {
+      Promise.all(getPromises).then((sheetData) => {
+        const [, cnpjCpfs, eSocialArr, dctfArr, ecdArr] = sheetData;
+
         sendStatus(0.25, 'Importação concluída...<br>');
         const idsFiltrados = cnpjCpfs.map((v) => {
           if (v) return v.replace(/\./g, '').replace(/-/g, '');
@@ -60,10 +65,6 @@ ipcRenderer.on('main', (e, { op, data }) => {
         });
 
         const passo = 0.5 / idsFiltrados.length;
-
-        const eSocialArr = [];
-        const dctfArr = [];
-        const ecdArr = [];
 
         sendStatus(0.26, 'Cruzando informações...<br>');
         idsFiltrados.forEach((id, i) => {
@@ -73,39 +74,39 @@ ipcRenderer.on('main', (e, { op, data }) => {
             if (now) {
               if (now.comp.ano === comp.ano && now.comp.mes === comp.mes) {
                 eSocialArr[i] = now.fechamento.compSemMovto ? 'SM' : 'OK';
-                msg = `<span style="color: green"> ${now.fileName} OK!</span><br>`;
+                msg = `<span style="color: green">${now.fileName} OK!</span><br>`;
               } else {
                 eSocialArr[i] = now.fechamento.compSemMovto ? `SM CompErr ${now.fileName}` : `OK CompErr ${now.fileName}`;
 
-                msg = `<span style="color: red"> ${now.fileName} competência errada!</span><br>`;
+                msg = `<span style="color: red">${now.fileName} competência errada!</span><br>`;
               }
-            } else eSocialArr[i] = '';
+            } else if (!eSocialArr[i]) eSocialArr[i] = '';
           }
           if (dctf) {
             const now = dctfFiles.find(o => o.cnpj === id.replace('/', ''));
             if (now) {
               if (now.comp.ano === comp.ano && now.comp.mes === comp.mes) {
                 dctfArr[i] = 'OK';
-                msg = `<span style="color: green"> ${now.fileName} OK!</span><br>`;
+                msg = `<span style="color: green">${now.fileName} OK!</span><br>`;
               } else {
                 dctfArr[i] = `OK CompErr ${now.fileName}`;
 
-                msg = `<span style="color: red"> ${now.fileName} competência errada!</span><br>`;
+                msg = `<span style="color: red">${now.fileName} competência errada!</span><br>`;
               }
-            } else dctfArr[i] = '';
+            } else if (!dctfArr[i]) dctfArr[i] = '';
           }
           if (ecd) {
             const now = ecdFiles.find(o => o.cnpj === id.split('/')[0] || o.cpf === id);
             if (now) {
               if (now.comp.ano === comp.ano && now.comp.mes === comp.mes) {
                 ecdArr[i] = 'OK';
-                msg = `<span style="color: green"> ${now.fileName} OK!</span><br>`;
+                msg = `<span style="color: green">${now.fileName} OK!</span><br>`;
               } else {
                 ecdArr[i] = `OK CompErr ${now.fileName}`;
 
-                msg = `<span style="color: red"> ${now.fileName} competência errada!</span><br>`;
+                msg = `<span style="color: red">${now.fileName} competência errada!</span><br>`;
               }
-            } else ecdArr[i] = '';
+            } else if (!ecdArr[i]) ecdArr[i] = '';
           }
 
           sendStatus(0.26 + (passo * i), msg);

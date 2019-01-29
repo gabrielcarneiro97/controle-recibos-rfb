@@ -20,6 +20,7 @@ const createWindow = () => {
     height: 570,
     resizable: false,
     autoHideMenuBar: true,
+    fullscreenable: false,
   });
 
   processWindow = new BrowserWindow({
