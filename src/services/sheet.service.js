@@ -100,6 +100,21 @@ function getSheetRange(range, ano) {
   });
 }
 
+function getSheetRanges(ranges, ano) {
+  return new Promise((resolve, reject) => {
+    authorize((auth) => {
+      sheets.spreadsheets.values.batchGet({
+        auth,
+        ranges,
+        spreadsheetId: sheetId[ano],
+      }, (err, res) => {
+        if (err) reject(err);
+        else resolve(res);
+      });
+    });
+  });
+}
+
 function getCol(col, ano) {
   return new Promise((resolve, reject) => {
     const { dataRowLoc, pageName } = SHEET_INFOS;
@@ -129,6 +144,108 @@ function getColByDec(name, { mes, ano }) {
   return getCol(col, ano);
 }
 
+function getColsByName(names, { mes, ano }) {
+  const { dataRowLoc, pageName, colNames } = SHEET_INFOS;
+  const ranges = [];
+
+  names.forEach((name) => {
+    if (name === 'esocial' || name === 'dctf' || name === 'ecd') {
+      const col = calcCol(mes, name);
+      ranges.push(`${pageName}!${col}${dataRowLoc.primDataRow}:${col}`);
+    } else {
+      const col = colNames[name];
+      if (col) ranges.push(`${pageName}!${col}${dataRowLoc.primDataRow}:${col}`);
+    }
+  });
+
+  return new Promise((resolve, reject) => {
+    getSheetRanges(ranges, ano).then(
+      res => resolve(res.data.valueRanges.map(o => o.values.map(v => v[0]))))
+    .catch(err => reject(err));
+  });
+}
+
+function convertHex(color, alpha = 1.0) {
+  const hex = color.replace('#', '');
+  const red = parseInt(hex.substring(0, 2), 16) / 255;
+  const green = parseInt(hex.substring(2, 4), 16) / 255;
+  const blue = parseInt(hex.substring(4, 6), 16) / 255;
+
+  return {
+    red,
+    green,
+    blue,
+    alpha,
+  };
+}
+
+function convertStrRange(str, pageId) {
+  if (str === '*') {
+    return {
+      sheetId: pageId || 0,
+    };
+  }
+  const arr = str.includes('!') ? str.split('!')[1].split(':') : str.split(':');
+  const regex = /([A-Z]*)(\d*)/;
+
+  let [, startColumnIndex, startRowIndex] = regex.exec(arr[0]);
+
+  startColumnIndex = lton(startColumnIndex) - 1;
+  startRowIndex = parseInt(startRowIndex, 10) - 1;
+
+  let endColumnIndex;
+  let endRowIndex;
+  if (arr[1]) {
+    [, endColumnIndex, endRowIndex] = regex.exec(arr[1]);
+    endColumnIndex = lton(endColumnIndex);
+    endRowIndex = parseInt(endRowIndex, 10);
+  } else {
+    endColumnIndex = startColumnIndex + 1;
+    endRowIndex = startRowIndex + 1;
+  }
+
+  return {
+    sheetId: pageId || 0,
+    startColumnIndex: startColumnIndex === 0 ? 0 : startColumnIndex || undefined,
+    endColumnIndex: endColumnIndex === 0 ? 0 : endColumnIndex || undefined,
+    startRowIndex: startRowIndex === 0 ? 0 : startRowIndex || undefined,
+    endRowIndex: endRowIndex === 0 ? 0 : endRowIndex || undefined,
+  };
+}
+
+function updateCellsColor(rangesColor, ano) {
+  const requests = [];
+
+  rangesColor.forEach(({ range, color }) => {
+    const white = convertHex('#ffffff');
+    const req = {
+      repeatCell: {
+        fields: 'userEnteredFormat(backgroundColor)',
+        range: convertStrRange(range),
+        cell: {
+          userEnteredFormat: {
+            backgroundColor: color ? convertHex(color) : white,
+          },
+        },
+      },
+    };
+
+    requests.push(req);
+  });
+
+  const resource = { requests };
+  authorize((auth) => {
+    sheets.spreadsheets.batchUpdate({
+      auth,
+      resource,
+      spreadsheetId: sheetId[ano],
+    }, (err, res) => {
+      if (err) console.error(err);
+      else console.log(res);
+    });
+  });
+}
+
 module.exports = {
   lton,
   ntol,
@@ -138,6 +255,10 @@ module.exports = {
   writeColByDec,
   writeCell,
   getSheetRange,
+  getSheetRanges,
   getColByName,
   getColByDec,
+  getColsByName,
+  updateCellsColor,
+  convertStrRange,
 };
