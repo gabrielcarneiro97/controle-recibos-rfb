@@ -214,31 +214,23 @@ function convertStrRange(str, pageId) {
 }
 
 function updateCellsColor(rangesColor, ano) {
-  const requests = [];
-
-  rangesColor.forEach(({ range, color }) => {
-    const req = {
-      repeatCell: {
-        fields: 'userEnteredFormat(backgroundColor)',
-        range: convertStrRange(range),
-        cell: {
-          userEnteredFormat: {
-            backgroundColor: color ? convertHex(color) : convertHex('#ffffff'),
-          },
+  const requests = rangesColor.map(({ range, color }) => ({
+    repeatCell: {
+      fields: 'userEnteredFormat(backgroundColor)',
+      range: range ? convertStrRange(range) : convertStrRange('*'),
+      cell: {
+        userEnteredFormat: {
+          backgroundColor: color ? convertHex(color) : convertHex('#ffffff'),
         },
       },
-    };
-
-    requests.push(req);
-  });
-
-  const resource = { requests };
+    },
+  }));
 
   return new Promise((resolve, reject) => {
     authorize((auth) => {
       sheets.spreadsheets.batchUpdate({
         auth,
-        resource,
+        resource: { requests },
         spreadsheetId: sheetId[ano],
       }, (err, res) => {
         if (err) reject(err);
