@@ -217,14 +217,13 @@ function updateCellsColor(rangesColor, ano) {
   const requests = [];
 
   rangesColor.forEach(({ range, color }) => {
-    const white = convertHex('#ffffff');
     const req = {
       repeatCell: {
         fields: 'userEnteredFormat(backgroundColor)',
         range: convertStrRange(range),
         cell: {
           userEnteredFormat: {
-            backgroundColor: color ? convertHex(color) : white,
+            backgroundColor: color ? convertHex(color) : convertHex('#ffffff'),
           },
         },
       },
@@ -234,14 +233,17 @@ function updateCellsColor(rangesColor, ano) {
   });
 
   const resource = { requests };
-  authorize((auth) => {
-    sheets.spreadsheets.batchUpdate({
-      auth,
-      resource,
-      spreadsheetId: sheetId[ano],
-    }, (err, res) => {
-      if (err) console.error(err);
-      else console.log(res);
+
+  return new Promise((resolve, reject) => {
+    authorize((auth) => {
+      sheets.spreadsheets.batchUpdate({
+        auth,
+        resource,
+        spreadsheetId: sheetId[ano],
+      }, (err, res) => {
+        if (err) reject(err);
+        else resolve(res);
+      });
     });
   });
 }

@@ -21,10 +21,16 @@ const createWindow = () => {
     resizable: false,
     autoHideMenuBar: true,
     fullscreenable: false,
+    webPreferences: {
+      nodeIntegration: true,
+    },
   });
 
   processWindow = new BrowserWindow({
     show: false,
+    webPreferences: {
+      nodeIntegration: true,
+    },
   });
 
   // and load the index.html of the app.
