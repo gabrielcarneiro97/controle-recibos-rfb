@@ -8,7 +8,7 @@ const { primDataRow } = require('../sheetInfos.json').dataRowLoc;
 const ROW_OFFSET = parseInt(primDataRow, 10);
 
 function br(str) {
-  return `${str}<br>`;
+  return str !== '' ? `${str.replace(/\r/, '').replace(/\n/g, '<br>\n')}<br>` : '';
 }
 
 function span(color) {
@@ -26,7 +26,7 @@ function sendStatus(status, msg, err) {
       op: 'progress',
       data: {
         status,
-        msg,
+        msg: msg.includes('<br>') ? msg : br(msg),
         err,
       },
     });
@@ -35,11 +35,11 @@ function sendStatus(status, msg, err) {
 ipcRenderer.on('main', (e, { op, data }) => {
   if (op === 'start') {
     const { comp } = data;
-    sendStatus(0, br('Inciando leitura de arquivos...'));
+    sendStatus(0, 'Inciando leitura de arquivos...');
     readComp(comp).then((files) => {
-      sendStatus(0.1, br('Leitura de arquivos concluída...'));
+      sendStatus(0.1, 'Leitura de arquivos concluída...');
 
-      sendStatus(0.15, br('Filtrando arquivos...'));
+      sendStatus(0.15, 'Filtrando arquivos...');
       const eSocialFiles = [];
       const dctfFiles = [];
       const ecdFiles = [];
@@ -53,12 +53,12 @@ ipcRenderer.on('main', (e, { op, data }) => {
           ecdFiles.push(o);
         }
       });
-      sendStatus(0.17, br('Filtragem concluída...') +
-      br(`Arquivos eSocial: ${eSocialFiles.length}`) +
-      br(`Arquivos DCTF: ${dctfFiles.length}`) +
-      br(`Arquivos ECD: ${ecdFiles.length}`));
+      sendStatus(0.17, `Filtragem concluída...
+      Arquivos eSocial: ${eSocialFiles.length}
+      Arquivos DCTF: ${dctfFiles.length}
+      Arquivos ECD: ${ecdFiles.length}`);
 
-      sendStatus(0.19, br('Importando dados da planilha...'));
+      sendStatus(0.19, 'Importando dados da planilha...');
 
       const eSocial = eSocialFiles.length !== 0;
       const dctf = dctfFiles.length !== 0;
@@ -68,7 +68,7 @@ ipcRenderer.on('main', (e, { op, data }) => {
         .then((cols) => {
           const [, cnpjCpfs, eSocialArr, dctfArr, ecdArr] = cols;
 
-          sendStatus(0.25, br('Importação concluída...'));
+          sendStatus(0.25, 'Importação concluída...');
           const idsFiltrados = cnpjCpfs.map((v) => {
             if (v) return v.replace(/\./g, '').replace(/-/g, '');
             return '';
@@ -76,7 +76,7 @@ ipcRenderer.on('main', (e, { op, data }) => {
 
           const passo = 0.5 / idsFiltrados.length;
 
-          sendStatus(0.26, br('Cruzando informações...'));
+          sendStatus(0.26, 'Cruzando informações...');
           idsFiltrados.forEach((id, i) => {
             let msg = '';
             if (eSocial) {
@@ -124,7 +124,7 @@ ipcRenderer.on('main', (e, { op, data }) => {
             sendStatus(0.26 + (passo * i), msg);
           });
 
-          sendStatus(0.77, br('Cruzamento finalizado com sucesso...') + br('Iniciando escrita...'));
+          sendStatus(0.77, 'Cruzamento finalizado com sucesso...\nIniciando escrita...');
 
           const writePromises = [];
 
@@ -133,7 +133,7 @@ ipcRenderer.on('main', (e, { op, data }) => {
           if (ecd) writePromises.push(writeColByDec('ecd', ecdArr, comp));
 
           Promise.all(writePromises).then(() => {
-            sendStatus(1, br('Processo finalizado com sucesso!'));
+            sendStatus(1, 'Processo finalizado com sucesso!');
             ipcRenderer.send('toMain', { op: 'end' });
           }).catch((errs) => {
             let msgs;

@@ -4,6 +4,9 @@ const { Line } = require('progressbar.js');
 
 const { version } = require('../package.json');
 
+const ANO = new Date().getFullYear().toString();
+// const MES = (new Date().getMonth() + 1).toString().padStart(2, '0');
+
 $(document).ready(() => {
   $('select').formSelect();
 
@@ -30,7 +33,7 @@ $(document).ready(() => {
 
   const comp = {
     mes: '',
-    ano: '',
+    ano: ANO,
   };
 
   const checkBtn = () => {
@@ -38,6 +41,8 @@ $(document).ready(() => {
       btn.removeAttr('disabled');
     } else btn.attr('disabled', true);
   };
+
+  selectAno.val(ANO);
 
   selectMes.change((e) => {
     comp.mes = e.target.value;
