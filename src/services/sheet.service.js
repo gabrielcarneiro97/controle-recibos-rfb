@@ -160,7 +160,16 @@ function getColsByName(names, { mes, ano }) {
 
   return new Promise((resolve, reject) => {
     getSheetRanges(ranges, ano).then(
-      res => resolve(res.data.valueRanges.map(o => o.values.map(v => v[0]))))
+      (res) => {
+        const { valueRanges } = res.data;
+
+        let ret = [];
+
+        if (Array.isArray(valueRanges)) {
+          ret = valueRanges.map(o => (Array.isArray(o.values) ? o.values.map(v => v[0]) : []));
+        }
+        resolve(ret);
+      })
     .catch(err => reject(err));
   });
 }
@@ -240,6 +249,67 @@ function updateCellsColor(rangesColor, ano) {
   });
 }
 
+function addNotes(rangesNotes, ano) {
+  const requests = rangesNotes.map(({ range, note }) => ({
+    repeatCell: {
+      fields: 'note',
+      range: range ? convertStrRange(range) : convertStrRange('*'),
+      cell: {
+        note: range ? note : '',
+      },
+    },
+  }));
+
+  return new Promise((resolve, reject) => {
+    authorize((auth) => {
+      sheets.spreadsheets.batchUpdate({
+        auth,
+        resource: { requests },
+        spreadsheetId: sheetId[ano],
+      }, (err, res) => {
+        if (err) reject(err);
+        else resolve(res);
+      });
+    });
+  });
+}
+
+function clearNotes(ano) {
+  return addNotes([{ range: '' }], ano);
+}
+
+function addNotesColor(rangeNotesColor, ano) {
+  const requests = rangeNotesColor.map(({ range, note, color }) => ({
+    repeatCell: {
+      fields: 'userEnteredFormat(backgroundColor),note',
+      range: range ? convertStrRange(range) : convertStrRange('*'),
+      cell: {
+        userEnteredFormat: {
+          backgroundColor: color ? convertHex(color) : convertHex('#ffffff'),
+        },
+        note: range ? note : '',
+      },
+    },
+  }));
+
+  return new Promise((resolve, reject) => {
+    authorize((auth) => {
+      sheets.spreadsheets.batchUpdate({
+        auth,
+        resource: { requests },
+        spreadsheetId: sheetId[ano],
+      }, (err, res) => {
+        if (err) reject(err);
+        else resolve(res);
+      });
+    });
+  });
+}
+
+function clearNotesColor(ano) {
+  return addNotesColor([{ range: '' }], ano);
+}
+
 module.exports = {
   lton,
   ntol,
@@ -255,4 +325,8 @@ module.exports = {
   getColsByName,
   updateCellsColor,
   convertStrRange,
+  addNotes,
+  clearNotes,
+  addNotesColor,
+  clearNotesColor,
 };

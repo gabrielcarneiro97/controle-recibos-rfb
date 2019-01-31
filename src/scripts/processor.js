@@ -1,9 +1,13 @@
+/* eslint no-param-reassign: 0 */
+
 const { ipcRenderer } = require('electron');
 const { readComp } = require('./services/xml.service');
 
-const { writeColByDec, getColsByName /* , updateCellsColor, ntol  */} = require('./services/sheet.service');
+const { writeColByDec, getColsByName, addNotesColor, clearNotesColor, calcCol } = require('./services/sheet.service');
 
 const { primDataRow } = require('../sheetInfos.json').dataRowLoc;
+
+const { YELLOW, RED } = require('../colors.json');
 
 const ROW_OFFSET = parseInt(primDataRow, 10);
 
@@ -32,6 +36,19 @@ function sendStatus(status, msg, err) {
     });
 }
 
+function checkEsocialSm(now, eSocialArr, i, notes, cellId) {
+  if (now.fechamento.compSemMovto) {
+    eSocialArr[i] = 'SM';
+    notes.push({ range: cellId, color: YELLOW });
+  } else eSocialArr[i] = 'OK';
+}
+
+function msgErr(notes, cellId, msg, arr, i) {
+  arr[i] = 'ER';
+  notes.push({ range: cellId, note: msg, color: RED });
+  return SPAN_RED(msg);
+}
+
 ipcRenderer.on('main', (e, { op, data }) => {
   if (op === 'start') {
     const { comp } = data;
@@ -43,6 +60,10 @@ ipcRenderer.on('main', (e, { op, data }) => {
       const eSocialFiles = [];
       const dctfFiles = [];
       const ecdFiles = [];
+
+      const eSocialCol = calcCol(comp.mes, 'esocial');
+      const dctfCol = calcCol(comp.mes, 'dctf');
+      const ecdCol = calcCol(comp.mes, 'ecd');
 
       files.forEach((o) => {
         if (o.tipo === 's1299') {
@@ -68,6 +89,8 @@ ipcRenderer.on('main', (e, { op, data }) => {
         .then((cols) => {
           const [, cnpjCpfs, eSocialArr, dctfArr, ecdArr] = cols;
 
+          const notes = [];
+
           sendStatus(0.25, 'Importação concluída...');
           const idsFiltrados = cnpjCpfs.map((v) => {
             if (v) return v.replace(/\./g, '').replace(/-/g, '');
@@ -79,44 +102,45 @@ ipcRenderer.on('main', (e, { op, data }) => {
           sendStatus(0.26, 'Cruzando informações...');
           idsFiltrados.forEach((id, i) => {
             let msg = '';
+            const row = i + ROW_OFFSET;
             if (eSocial) {
               const now = eSocialFiles.find(o => o.cnpj === id.split('/')[0] || o.cpf === id);
+              const cellId = `${eSocialCol}${row}`;
               if (now) {
-                if (now.comp.ano === comp.ano && now.comp.mes === comp.mes) {
-                  eSocialArr[i] = now.fechamento.compSemMovto ? 'SM' : 'OK';
+                if (!now.ambienteProd) {
+                  msg = msgErr(notes, cellId, `${now.fileName} em ambiente de testes!`, eSocialArr, i);
+                } else if (now.comp.ano === comp.ano && now.comp.mes === comp.mes) {
+                  checkEsocialSm(now, eSocialArr, i, notes, cellId);
                   msg = SPAN_GREEN(`${now.fileName} OK!`);
                 } else {
-                  eSocialArr[i] = now.fechamento.compSemMovto ? `SM CompErr ${now.fileName}` : `OK CompErr ${now.fileName}`;
-
-                  msg = SPAN_RED(`${now.fileName} competência errada!`);
+                  checkEsocialSm(now, eSocialArr, i, notes, cellId);
+                  msg = msgErr(notes, cellId, `${now.fileName} competência errada!`, eSocialArr, i);
                 }
               } else if (!eSocialArr[i]) eSocialArr[i] = '';
             }
             if (dctf) {
               const now = dctfFiles.find(o => o.cnpj === id.replace('/', ''));
+              const cellId = `${dctfCol}${row}`;
               if (now) {
                 if (now.comp.ano === comp.ano && now.comp.mes === comp.mes) {
                   dctfArr[i] = 'OK';
                   msg = SPAN_GREEN(`${now.fileName} OK!`);
                 } else {
-                  dctfArr[i] = `OK CompErr ${now.fileName}`;
-
-                  console.log(i + ROW_OFFSET);
-
-                  msg = SPAN_RED(`${now.fileName} competência errada!`);
+                  msg = msgErr(notes, cellId, `${now.fileName} competência errada!`, dctfArr, i);
                 }
               } else if (!dctfArr[i]) dctfArr[i] = '';
             }
             if (ecd) {
               const now = ecdFiles.find(o => o.cnpj === id.split('/')[0] || o.cpf === id);
+              const cellId = `${ecdCol}${row}`;
               if (now) {
-                if (now.comp.ano === comp.ano && now.comp.mes === comp.mes) {
+                if (!now.ambienteProd) {
+                  msg = msgErr(notes, cellId, `${now.fileName} em ambiente de testes!`, eSocialArr, i);
+                } else if (now.comp.ano === comp.ano && now.comp.mes === comp.mes) {
                   ecdArr[i] = 'OK';
                   msg = SPAN_GREEN(`${now.fileName} OK!`);
                 } else {
-                  ecdArr[i] = `OK CompErr ${now.fileName}`;
-
-                  msg = SPAN_RED(`${now.fileName} competência errada!`);
+                  msg = msgErr(notes, cellId, `${now.fileName} competência errada!`, ecdArr, i);
                 }
               } else if (!ecdArr[i]) ecdArr[i] = '';
             }
@@ -128,25 +152,31 @@ ipcRenderer.on('main', (e, { op, data }) => {
 
           const writePromises = [];
 
-          if (eSocial) writePromises.push(writeColByDec('esocial', eSocialArr, comp));
-          if (dctf) writePromises.push(writeColByDec('dctf', dctfArr, comp));
-          if (ecd) writePromises.push(writeColByDec('ecd', ecdArr, comp));
+          clearNotesColor(comp.ano).then(() => {
+            if (eSocial) writePromises.push(writeColByDec('esocial', eSocialArr, comp));
+            if (dctf) writePromises.push(writeColByDec('dctf', dctfArr, comp));
+            if (ecd) writePromises.push(writeColByDec('ecd', ecdArr, comp));
+            if (notes.length !== 0) writePromises.push(addNotesColor(notes, comp.ano));
 
-          Promise.all(writePromises).then(() => {
-            sendStatus(1, 'Processo finalizado com sucesso!');
-            ipcRenderer.send('toMain', { op: 'end' });
-          }).catch((errs) => {
-            let msgs;
-            if (Array.isArray(errs)) msgs = errs.map(o => o.message);
-            else msgs = [errs.message];
-            sendStatus(0, LOG_ERR, msgs);
-          });
+            Promise.all(writePromises).then(() => {
+              sendStatus(1, 'Processo finalizado com sucesso!');
+              ipcRenderer.send('toMain', { op: 'end' });
+            }).catch((errs) => {
+              let msgs;
+              if (Array.isArray(errs)) msgs = errs.map(o => o.message);
+              else msgs = [errs.message];
+
+              console.error(errs);
+              sendStatus(0, LOG_ERR, msgs);
+            });
+          }).then(err => console.error(err, sendStatus(0, LOG_ERR, [err.message])));
         }).catch((errs) => {
           let msgs;
           if (Array.isArray(errs)) msgs = errs.map(o => o.message);
           else msgs = [errs.message];
+          console.error(errs);
           sendStatus(0, LOG_ERR, msgs);
         });
-    }).catch(err => sendStatus(0, LOG_ERR, [err.message]));
+    }).catch(err => console.error(err, sendStatus(0, LOG_ERR, [err.message])));
   }
 });

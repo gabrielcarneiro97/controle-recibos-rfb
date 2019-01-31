@@ -38,8 +38,8 @@ const createWindow = () => {
   processWindow.loadURL(`file://${__dirname}/processor.html`);
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
-  processWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
+  // processWindow.webContents.openDevTools();
 
   // Emitted when the window is closed.
   mainWindow.on('closed', () => {
