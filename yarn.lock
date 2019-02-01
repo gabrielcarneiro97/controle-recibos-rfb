@@ -2193,6 +2193,10 @@ electron-installer-snap@^3.1.0:
     which "^1.3.0"
     yargs "^12.0.5"
 
+electron-is-dev@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/electron-is-dev/-/electron-is-dev-1.0.1.tgz#6e0a184736fe7aea77d18210b0b0f6a02402c4bc"
+
 electron-osx-sign@^0.4.1:
   version "0.4.11"
   resolved "https://registry.yarnpkg.com/electron-osx-sign/-/electron-osx-sign-0.4.11.tgz#8377732fe7b207969f264b67582ee47029ce092f"
@@ -2270,6 +2274,13 @@ electron-squirrel-startup@^1.0.0:
 electron-to-chromium@^1.2.7, electron-to-chromium@^1.3.47:
   version "1.3.106"
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.106.tgz#672183160e783cb546cff83d9a98d5f69cd91874"
+
+electron-util@^0.11.0:
+  version "0.11.0"
+  resolved "https://registry.yarnpkg.com/electron-util/-/electron-util-0.11.0.tgz#d9b71692241598a5f1e2a6866adf7e1589b783fa"
+  dependencies:
+    electron-is-dev "^1.0.1"
+    new-github-issue-url "^0.2.0"
 
 electron-windows-store@^0.12.0:
   version "0.12.0"
@@ -4566,6 +4577,10 @@ nested-error-stacks@^1.0.1:
   resolved "https://registry.yarnpkg.com/nested-error-stacks/-/nested-error-stacks-1.0.2.tgz#19f619591519f096769a5ba9a86e6eeec823c3cf"
   dependencies:
     inherits "~2.0.1"
+
+new-github-issue-url@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/new-github-issue-url/-/new-github-issue-url-0.2.0.tgz#41263fa3b9e2d96b29252100fd1ef18274c12a74"
 
 next-tick@1:
   version "1.0.0"

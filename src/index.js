@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
+import { is } from 'electron-util';
 
-require('electron-reload')(__dirname);
-
+if (is.development) require('electron-reload')(__dirname); // eslint-disable-line global-require
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
@@ -38,8 +38,10 @@ const createWindow = () => {
   processWindow.loadURL(`file://${__dirname}/processor.html`);
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
-  // processWindow.webContents.openDevTools();
+  if (is.development) {
+    mainWindow.webContents.openDevTools();
+    processWindow.webContents.openDevTools();
+  }
 
   // Emitted when the window is closed.
   mainWindow.on('closed', () => {
