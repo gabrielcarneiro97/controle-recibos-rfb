@@ -310,6 +310,15 @@ function clearNotesColor(ano) {
   return addNotesColor([{ range: '' }], ano);
 }
 
+function clearNotesColorComp(comp) {
+  const primCol = calcCol(comp.mes, 'esocial');
+  const lastCol = calcCol(comp.mes, 'ecd');
+
+  const { pageName } = SHEET_INFOS;
+
+  return addNotesColor([{ range: `${pageName}!${primCol}:${lastCol}` }], comp.ano);
+}
+
 module.exports = {
   lton,
   ntol,
@@ -329,4 +338,5 @@ module.exports = {
   clearNotes,
   addNotesColor,
   clearNotesColor,
+  clearNotesColorComp,
 };

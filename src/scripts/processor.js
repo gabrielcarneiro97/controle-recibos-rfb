@@ -3,7 +3,7 @@
 const { ipcRenderer } = require('electron');
 const { readComp } = require('./services/xml.service');
 
-const { writeColByDec, getColsByName, addNotesColor, clearNotesColor, calcCol } = require('./services/sheet.service');
+const { writeColByDec, getColsByName, addNotesColor, clearNotesColorComp, calcCol } = require('./services/sheet.service');
 
 const { primDataRow } = require('../sheetInfos.json').dataRowLoc;
 
@@ -43,6 +43,17 @@ function checkEsocialSm(now, eSocialArr, i, notes, cellId) {
   } else eSocialArr[i] = 'OK';
 }
 
+function ecdSm(now) {
+  return !Object.values(now.fechamento).find(v => v);
+}
+
+function checkEcdSm(now, ecdArr, i, notes, cellId) {
+  if (ecdSm(now)) {
+    ecdArr[i] = 'SM';
+    notes.push({ range: cellId, color: YELLOW });
+  } else ecdArr[i] = 'OK';
+}
+
 function msgErr(notes, cellId, msg, arr, i) {
   arr[i] = 'ER';
   notes.push({ range: cellId, note: msg, color: RED });
@@ -66,12 +77,14 @@ ipcRenderer.on('main', (e, { op, data }) => {
       const ecdCol = calcCol(comp.mes, 'ecd');
 
       files.forEach((o) => {
-        if (o.tipo === 's1299') {
-          eSocialFiles.push(o);
-        } else if (o.tipo === 'dctf') {
-          dctfFiles.push(o);
-        } else if (o.tipo === 'r2099') {
-          ecdFiles.push(o);
+        if (o) {
+          if (o.tipo === 's1299') {
+            eSocialFiles.push(o);
+          } else if (o.tipo === 'dctf') {
+            dctfFiles.push(o);
+          } else if (o.tipo === 'r2099') {
+            ecdFiles.push(o);
+          }
         }
       });
       sendStatus(0.17, `Filtragem concluída...
@@ -113,10 +126,9 @@ ipcRenderer.on('main', (e, { op, data }) => {
                   checkEsocialSm(now, eSocialArr, i, notes, cellId);
                   msg = SPAN_GREEN(`${now.fileName} OK!`);
                 } else {
-                  checkEsocialSm(now, eSocialArr, i, notes, cellId);
                   msg = msgErr(notes, cellId, `${now.fileName} competência errada!`, eSocialArr, i);
                 }
-              } else if (!eSocialArr[i]) eSocialArr[i] = '';
+              } else eSocialArr[i] = '';
             }
             if (dctf) {
               const now = dctfFiles.find(o => o.cnpj === id.replace('/', ''));
@@ -128,21 +140,21 @@ ipcRenderer.on('main', (e, { op, data }) => {
                 } else {
                   msg = msgErr(notes, cellId, `${now.fileName} competência errada!`, dctfArr, i);
                 }
-              } else if (!dctfArr[i]) dctfArr[i] = '';
+              } else dctfArr[i] = '';
             }
             if (ecd) {
               const now = ecdFiles.find(o => o.cnpj === id.split('/')[0] || o.cpf === id);
               const cellId = `${ecdCol}${row}`;
               if (now) {
                 if (!now.ambienteProd) {
-                  msg = msgErr(notes, cellId, `${now.fileName} em ambiente de testes!`, eSocialArr, i);
+                  msg = msgErr(notes, cellId, `${now.fileName} em ambiente de testes!`, ecdArr, i);
                 } else if (now.comp.ano === comp.ano && now.comp.mes === comp.mes) {
-                  ecdArr[i] = 'OK';
+                  checkEcdSm(now, ecdArr, i, notes, cellId);
                   msg = SPAN_GREEN(`${now.fileName} OK!`);
                 } else {
                   msg = msgErr(notes, cellId, `${now.fileName} competência errada!`, ecdArr, i);
                 }
-              } else if (!ecdArr[i]) ecdArr[i] = '';
+              } else ecdArr[i] = '';
             }
 
             sendStatus(0.26 + (passo * i), msg);
@@ -152,7 +164,7 @@ ipcRenderer.on('main', (e, { op, data }) => {
 
           const writePromises = [];
 
-          clearNotesColor(comp.ano).then(() => {
+          clearNotesColorComp(comp).then(() => {
             if (eSocial) writePromises.push(writeColByDec('esocial', eSocialArr, comp));
             if (dctf) writePromises.push(writeColByDec('dctf', dctfArr, comp));
             if (ecd) writePromises.push(writeColByDec('ecd', ecdArr, comp));

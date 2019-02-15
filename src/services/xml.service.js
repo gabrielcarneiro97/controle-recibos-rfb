@@ -95,12 +95,18 @@ function dctfReader(obj, fileName) {
 }
 
 function xmlReader(utfFile, fileName) {
-  const obj = xml2js(utfFile, CONVERT_CONFIG);
-  if (obj.eSocial) return s1299Reader(obj, fileName);
-  else if (obj.ProcDctf) return dctfReader(obj, fileName);
-  else if (obj.Reinf) return r2099Reader(obj, fileName);
-
-  return new Promise((resolve, reject) => reject(new Error('Falha na leitura do arquivo')));
+  if (!fileName.endsWith('.xml')) {
+    return new Promise((resolve, reject) => reject(new Error(`Arquivo ${fileName} não é XML!`)));
+  }
+  try {
+    const obj = xml2js(utfFile, CONVERT_CONFIG);
+    if (obj.eSocial) return s1299Reader(obj, fileName);
+    else if (obj.ProcDctf) return dctfReader(obj, fileName);
+    else if (obj.Reinf) return r2099Reader(obj, fileName);
+  } catch (error) {
+    return new Promise((resolve, reject) => reject(error));
+  }
+  return new Promise((resolve, reject) => reject(new Error(`Falha na leitura do arquivo ${fileName}`)));
 }
 
 function readComp(comp) {
@@ -117,7 +123,7 @@ function readComp(comp) {
             xmlReader(data, fileName),
           );
         });
-        Promise.all(promises).then(objs => resolve(objs));
+        Promise.all(promises.map(p => p.catch(() => undefined))).then(objs => resolve(objs));
       }
     });
   });

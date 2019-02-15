@@ -8,12 +8,12 @@
     "primDataRow": "4"
   },
   "esocial": {
-    "prim": "F"
-  },
-  "dctf": {
     "prim": "G"
   },
-  "ecd": {
+  "dctf": {
     "prim": "H"
+  },
+  "ecd": {
+    "prim": "I"
   }
 }
