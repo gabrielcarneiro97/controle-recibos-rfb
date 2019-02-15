@@ -50,8 +50,6 @@ $(document).ready(() => {
   $(`#mes option[value=${MES}]`).prop('selected', true);
   selectMes.formSelect();
 
-  console.log(ANO);
-
   checkBtn();
 
   selectMes.change((e) => {
