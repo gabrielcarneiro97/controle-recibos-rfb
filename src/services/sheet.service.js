@@ -4,6 +4,7 @@ const { authorize } = require('./gAPI.service');
 
 const SHEET_INFOS = require('../../sheetInfos.json');
 const { sheetId } = require('../../config.json');
+const { WHITE } = require('../../colors.json');
 
 const sheets = new google.GoogleApis().sheets('v4');
 
@@ -229,7 +230,7 @@ function updateCellsColor(rangesColor, ano) {
       range: range ? convertStrRange(range) : convertStrRange('*'),
       cell: {
         userEnteredFormat: {
-          backgroundColor: color ? convertHex(color) : convertHex('#ffffff'),
+          backgroundColor: color ? convertHex(color) : convertHex(WHITE),
         },
       },
     },
@@ -285,7 +286,7 @@ function addNotesColor(rangeNotesColor, ano) {
       range: range ? convertStrRange(range) : convertStrRange('*'),
       cell: {
         userEnteredFormat: {
-          backgroundColor: color ? convertHex(color) : convertHex('#ffffff'),
+          backgroundColor: color ? convertHex(color) : convertHex(WHITE),
         },
         note: range ? note : '',
       },
@@ -332,11 +333,11 @@ module.exports = {
   getColByName,
   getColByDec,
   getColsByName,
-  updateCellsColor,
   convertStrRange,
+  updateCellsColor,
   addNotes,
-  clearNotes,
   addNotesColor,
+  clearNotes,
   clearNotesColor,
   clearNotesColorComp,
 };

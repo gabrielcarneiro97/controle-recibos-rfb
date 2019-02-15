@@ -1,4 +1,8 @@
 {
+  "WHITE": "#FFFFFF",
+  "BLACK": "#000000",
   "YELLOW": "#FFEF38",
-  "RED": "#FF2E2B"
+  "RED": "#FF2E2B",
+  "GREEN_LIGHT": "#26A69A",
+  "GREEN_WHITE": "#b2dfdb"
 }

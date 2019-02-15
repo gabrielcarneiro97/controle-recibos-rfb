@@ -4,6 +4,8 @@ const { Line } = require('progressbar.js');
 
 const { version } = require('../package.json');
 
+const { GREEN_WHITE, GREEN_LIGHT } = require('../colors.json');
+
 const ANO = new Date().getFullYear().toString();
 const MES = (new Date().getMonth() + 1).toString().padStart(2, '0');
 
@@ -13,9 +15,9 @@ $(document).ready(() => {
   $('#title').text(`XML Controller ${version}`);
 
   const bar = new Line('#bar', {
-    color: '#26a69a',
+    color: GREEN_LIGHT,
     strokeWidth: 6,
-    trailColor: '#b2dfdb',
+    trailColor: GREEN_WHITE,
     trailWidth: 6,
     svgStyle: { width: '100%', height: '100%', borderRadius: '2px' },
     text: {
