@@ -181,7 +181,7 @@ ipcRenderer.on('main', (e, { op, data }) => {
               console.error(errs);
               sendStatus(0, LOG_ERR, msgs);
             });
-          }).then(err => console.error(err, sendStatus(0, LOG_ERR, [err.message])));
+          }).catch(err => console.error(err, sendStatus(0, LOG_ERR, [err.message])));
         }).catch((errs) => {
           let msgs;
           if (Array.isArray(errs)) msgs = errs.map(o => o.message);

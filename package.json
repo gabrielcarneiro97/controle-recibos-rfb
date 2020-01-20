@@ -48,26 +48,21 @@
   },
   "dependencies": {
     "electron-compile": "^6.4.4",
-    "electron-reload": "^1.4.0",
+    "electron-reload": "^1.5.0",
     "electron-squirrel-startup": "^1.0.0",
-    "electron-util": "^0.11.0",
-    "google-auth-library": "^3.0.1",
-    "googleapis": "27",
-    "jquery": "^3.3.1",
+    "electron-util": "^0.13.1",
+    "google-auth-library": "^5.9.1",
+    "googleapis": "^47.0.0",
+    "jquery": "^3.4.1",
     "materialize-css": "^1.0.0",
-    "progressbar.js": "^1.0.1",
-    "xml-js": "^1.6.9"
+    "progressbar.js": "^1.1.0",
+    "xml-js": "^1.6.11"
   },
   "devDependencies": {
-    "babel-plugin-transform-async-to-generator": "^6.24.1",
-    "babel-preset-env": "^1.7.0",
-    "babel-preset-react": "^6.24.1",
     "electron-forge": "^5.2.4",
     "electron-prebuilt-compile": "4.0.0",
-    "eslint": "^3",
-    "eslint-config-airbnb": "^15",
-    "eslint-plugin-import": "^2",
-    "eslint-plugin-jsx-a11y": "^5",
-    "eslint-plugin-react": "^7"
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb": "^18.0.1",
+    "eslint-plugin-import": "^2.20.0"
   }
 }
